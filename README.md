@@ -51,5 +51,11 @@ Esta librería [JOI](https://joi.dev/api/?v=17.3.0) permite configurar qué cara
 
 ## Temas
 
+- Validacion con programación funcional con Javascript
+- Manipulación de archivos con `npm i express-fileupload`
+- Qué son los middlewares?
+
+### Middlewares
+Un middleware es una función que se puede ejecutar antes o después del manejo de una ruta. Esta función tiene acceso al objeto Request, Response y la función next().
 
 

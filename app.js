@@ -1,6 +1,7 @@
 const express = require("express")
 const nodemailer = require("nodemailer")
 const Joi = require("joi")
+const expressFileUpload = require("express-fileupload")
 const app = express()
 
 const port = 1000   //mas allá del 1000 usualmente están disponibles
@@ -25,7 +26,10 @@ const schema = Joi.object({
 app.listen(port)
 //use permite indicar a la aplicación que use determinadas configuraciones
 app.use( express.static('public') )
-app.use( express.urlencoded({ extended : true }) )
+app.use( express.json()) // <-- convierte de application/json a Object
+app.use( express.urlencoded({ extended : true }) ) //<-- esto convierte de application/x-www-form-urlencoded a Object
+//Express no tiene una solución nativa para usar "multipart/form-data". Debemos usar utility modules. El que usaremos nosotros es express-fileupload
+app.use(expressFileUpload())
 
 
 /*
@@ -39,16 +43,39 @@ app.get("/test", (req, res) => {
     console.log("test"); 
     console.log(process.env.CASILLA_MAIL); 
 })
+
 app.post("/enviar", (req, res) => {
     const contacto = req.body
+    const { archivo } = req.files
+
+    console.log(req.files)
+
+    const ubicacion = __dirname + "/public/uploads/" + archivo.name
+    console.log("Se guarda en: ")
+    console.log(ubicacion)
+   
+    //muevo al archivo a esa ubicación. Configuro un callback para el caso de error
+    archivo.mv(ubicacion, error => {
+        if (error) {
+            console.log("No se movió el archivo")
+        }
+    })
+
+    return res.end("consola")
 
     //paso como param mi objeto contacto para que se apliquen las reglas de validación
-    const validate = schema.validate(contacto)
+    // con la sintaxis de llave extrae propiedades de un objeto. El resultado de validate es un objeto y tiene esas propiedades. Las creo en una variable separada
+    const { error, value } = schema.validate(contacto);
 
-    console.log(validate)
+    if(error){
+        console.log(error.details)
+        res.end(error.details[0].message)
 
-    if(validate.error){
-        res.end(error)
+        const msg = {
+            error : error.details.map(e => {
+                console.log(e.message)
+            })
+        }
     } else {
         miniOutlook.sendMail({
             from : contacto.correo, // sender address
